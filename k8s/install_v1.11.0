@@ -1,0 +1,225 @@
+排错教程：
+	http://tinyurl.com/sybybld
+
+安装最新版的kubernetes
+	比较靠谱的教程：http://tinyurl.com/w2qkdts
+
+
+安装指定版本的kubernetes，可以参考上文的教程：
+
+kubernetes：v1.11.0
+docker: 17.03.0  最高支持这个版本
+
+一、环境配置：
+1.设置符合DNS的hostname、/etc/hosts、ssh免密互通、关闭firewalled、
+关闭swap
+2.配置http代理(或者用docker国内镜像)，使用docker搭建的代理，所以需要先安装docker
+3.kubernetes源、docker源
+
+一个简单的架构
+-master/etcd/pod1:
+|
+--pod2:
+|
+--pod3:
+|
+--pod4:
+--------------------
+
+二、安装指定版本的docker
+所有机器上都安装
+
+docker源，任选一个：
+yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+1.卸载docker
+yum remove docker  docker-client  docker-client-latest  docker-common  docker-latest  docker-latest-logrotate  docker-logrotate  docker-selinux  docker-engine-selinux  docker-engine docker-ce -y
+systemctl stop docker
+mv /var/lib/docker ~/docker-back-[version]
+yum list installed | grep docker
+
+2.yum安装
+yum install -y yum-utils device-mapper-persistent-data lvm2
+
+yum list docker-ce --showduplicates | sort -r
+
+yum -y install docker-ce-17.03.0.ce-1.el7.centos
+
+如果这一步提示安装依赖:http://tinyurl.com/wq48fu3
+yum -y install docker-ce-selinux-17.03.0.ce-1.el7.centos.noarch.rpm
+
+systemctl start docker
+
+3.启动应用
+启动代理程序;shadowsocks启动的socks5代理、socks5转http的polipo
+没有代理服务器可以跳过
+
+4.配置http代理
+kubeadm init需要方位google的一个api，然后根据api返回的参数生成所需的镜像pull命令，
+可以设置全局代理或者用docker hub中转所需镜像：
+
+配置代理的详尽方法：http://tinyurl.com/vc2vrkr
+
+linux设置代理：
+	# vim  /etc/profile
+	PROXY_HOST=192.168.61.141
+	export all_proxy=http://$PROXY_HOST:8123
+	export ftp_proxy=http://$PROXY_HOST:8123
+	export http_proxy=http://$PROXY_HOST:8123
+	export https_proxy=http://$PROXY_HOST:8123
+	export no_proxy=localhost,172.16.0.0/16,192.168.0.0/16.,127.0.0.1,10.10.0.0/16
+	# source /etc/profile
+docker配置代理：
+	# mkdir /etc/systemd/system/docker.service.d/
+	# cd /etc/systemd/system/docker.service.d/
+	# vi http-proxy.conf
+	[Service]
+	Environment="HTTP_PROXY=http://192.168.61.141:8123/"
+	Environment="HTTPS_PROXY=https://192.168.61.141:8123/"
+
+用docker hub中转：
+	思路是用外网服务器从指定的google api拉去镜像，
+	用自己的账号推送到docker hub或者其它的容器镜像服务，
+	在当前服务器上拉取镜像，
+	由于镜像是固定的，所以有人专门做成了公开镜像，
+	我们只需要按照名字拉取指定的镜像即可。
+	具体看后面的操作
+
+-----------------------
+
+三、安装指定版本的kubernetes
+所有机器都安装
+1.卸载
+yum remove kubeadm kubectl kubelet cri-tools.x86_64 kubernetes-cni.x86_64
+
+2.设置源
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+  
+[kubernetes]
+name=Kubernetes
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=0
+   
+EOF
+
+yum clean all
+
+yum makecache
+
+3.yum安装
+yum install -y kubelet-1.11.3 kubeadm-1.11.3 kubectl-1.11.3 kubernetes-cni-0.6.0-0.x86_64 --disableexcludes=kubernetes
+
+kubeadm version
+kubectl version
+kubelet version
+
+四、配置master节点
+有几种方式启动master节点：
+通过配置文件启动
+通过命令参数启动
+
+配置文件：
+cat kubeadm.yaml
+apiVersion: kubeadm.k8s.io/v1alpha1
+kind: MasterConfiguration
+controllerManagerExtraArgs:
+        horizontal-pod-autoscaler-use-rest-clients: "true"
+        horizontal-pod-autoscaler-sync-period: "10s"
+        node-monitor-grace-period: "10s"
+apiServerExtraArgs:
+        runtime-config: "api/all=true"
+kubernetesVersion: "stable-1.11"
+
+1.kubeadm init
+kubeadm init --config kubernets.yaml
+
+这一步需要连接google api，下载docker镜像，
+解决办法是配置http代理或者用容器镜像服务中转，
+目的就是把所需镜像下载下来
+
+用中转法下载镜像
+1.1查看所需镜像
+# kubeadm config images list --kubernetes-version=v1.11.0
+k8s.gcr.io/kube-apiserver-amd64:v1.11.0
+k8s.gcr.io/kube-controller-manager-amd64:v1.11.0
+k8s.gcr.io/kube-scheduler-amd64:v1.11.0
+k8s.gcr.io/kube-proxy-amd64:v1.11.0
+k8s.gcr.io/pause:3.1
+k8s.gcr.io/etcd-amd64:3.2.18
+k8s.gcr.io/coredns:1.1.3
+
+1.2下载镜像
+kubeadm config images list --kubernetes-version=v1.11.0 |sed -e 's/^/docker pull /g' -e 's#k8s.gcr.io#docker.io/mirrorgooglecontainers#g' |sh -x  #下载需要的镜像
+ 
+docker images |grep mirrorgooglecontainers |awk '{print "docker tag ",$1":"$2,$1":"$2}' |sed -e 's#mirrorgooglecontainers#k8s.gcr.io#2' |sh -x  #重命名镜像
+ 
+docker images |grep mirrorgooglecontainers |awk '{print "docker rmi ", $1":"$2}' |sh -x #删除mirrorgooglecontainers镜像
+
+coredns没包含在docker.io/mirrorgooglecontainers中，需要手工从coredns官方镜像转换下。
+docker pull coredns/coredns:1.1.3
+docker tag coredns/coredns:1.1.3 k8s.gcr.io/coredns:1.1.3
+docker rmi coredns/coredns:1.1.3
+
+另一种方法是用kubeadm init生成配置文件，修改配置文件的镜像地址为自己的仓库地址，
+具体方法：http://tinyurl.com/v52omnb
+导出配置文件：kubeadm config print-defaults --api-objects MasterConfiguration > kubeadm.conf
+替换 imageRepository: k8s.gcr.io 为 imageRepository: docker.io/mirrorgooglecontainers
+然后运行命令：
+kubeadm config images list --config kubeadm.conf
+kubeadm config images pull --config kubeadm.conf
+
+这里需要单独pull coredns/coredns:1.2.6 ，并且重新tag
+docker tag docker.io/coredns/coredns:1.1.3  docker.io/mirrorgooglecontainers/coredns:1.1.3
+
+kubeadm init --config kubeadm.conf
+
+第三种方法，下载的镜像是kubernetes的必须组件，用sh脚本把所有的组件都下载回来：
+./pull_k8s_images.sh
+
+
+2.再次执行kubeadm init
+kubeadm init --config kubernets.yaml
+
+这一步需要配置docker的http代理
+
+3.admin.conf
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+查看集群节点
+kubectl get nodes
+查看节点状态
+kubectl get pods -n kube-system
+部署网络插件
+kubectl apply -f https://git.io/weave-kube-1.6
+再次查看节点状态
+kubectl get pods -n kube-system
+
+4.worker节点
+所有worker节点
+kubeadm join 192.168.61.141:6443 --token abcdef.0123456789abcdef --discovery-token-ca-cert-hash sha256:91d6ee981778fc916c99d11b7a691ae23eb7d03024cf441f16134bad10cb76ca
+
+复制kubectl的管理文件
+mkdir -p $HOME/.kube && scp root@192.168.61.141:/etc/kubernetes/admin.conf $HOME/.kube/config
+查看集群节点
+kubectl get nodes
+查看节点状态
+kubectl get pods -n kube-system
+部署网络插件
+kubectl apply -f https://git.io/weave-kube-1.6
+在此查看节点状态
+kubectl get pods -n kube-system
+
+
+5.web UI
+官方文档
+https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/
+
+一个详细的Dashboard部署方案：
+http://tinyurl.com/sgl6onw
+
+6rook ceph
+一个详细的部署方案：http://tinyurl.com/yx4dnwzr
+

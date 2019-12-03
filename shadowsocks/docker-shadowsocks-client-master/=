@@ -1,0 +1,39 @@
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+Could not get metalink https://mirrors.fedoraproject.org/metalink?repo=epel-7&arch=x86_64&infra=stock&content=centos error was
+14: curl#7 - "Failed connect to 192.168.61.141:8123; Connection refused"
+ * base: mirrors.aliyun.com
+ * epel: mirrors.tuna.tsinghua.edu.cn
+ * extras: mirrors.aliyun.com
+ * updates: mirrors.aliyun.com
+Package docker-ce-selinux is obsoleted by docker-ce, trying to install 3:docker-ce-19.03.5-3.el7.x86_64 instead
+No package 17.03.0.ce-1.el7.centos available.
+Resolving Dependencies
+--> Running transaction check
+---> Package docker-ce.x86_64 3:19.03.5-3.el7 will be installed
+--> Processing Dependency: containerd.io >= 1.2.2-3 for package: 3:docker-ce-19.03.5-3.el7.x86_64
+--> Processing Dependency: docker-ce-cli for package: 3:docker-ce-19.03.5-3.el7.x86_64
+--> Running transaction check
+---> Package containerd.io.x86_64 0:1.2.10-3.2.el7 will be installed
+---> Package docker-ce-cli.x86_64 1:19.03.5-3.el7 will be installed
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+================================================================================
+ Package           Arch       Version                Repository            Size
+================================================================================
+Installing:
+ docker-ce         x86_64     3:19.03.5-3.el7        docker-ce-stable      24 M
+Installing for dependencies:
+ containerd.io     x86_64     1.2.10-3.2.el7         docker-ce-stable      23 M
+ docker-ce-cli     x86_64     1:19.03.5-3.el7        docker-ce-stable      39 M
+
+Transaction Summary
+================================================================================
+Install  1 Package (+2 Dependent packages)
+
+Total download size: 87 M
+Installed size: 362 M
+Downloading packages:
+Delta RPMs disabled because /usr/bin/applydeltarpm not installed.
