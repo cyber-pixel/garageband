@@ -223,3 +223,4 @@ http://tinyurl.com/sgl6onw
 6rook ceph
 一个详细的部署方案：http://tinyurl.com/yx4dnwzr
 
+这个版本的rook-ceph有问题，pod不能挂载volume，并且整个过程依赖翻墙服务
