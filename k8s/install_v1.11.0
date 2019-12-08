@@ -77,6 +77,8 @@ docker配置代理：
 	[Service]
 	Environment="HTTP_PROXY=http://192.168.61.141:8123/"
 	Environment="HTTPS_PROXY=https://192.168.61.141:8123/"
+	# systemctl daemon-reload
+	# systemctl restart docker	
 
 用docker hub中转：
 	思路是用外网服务器从指定的google api拉去镜像，
