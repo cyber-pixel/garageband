@@ -1,0 +1,48 @@
+MYSQL Replication
+主从复制配置
+
+=================================
+
+主库：
+	1、编辑my.cnf
+	//添加以下内容
+	log-bin=mysql-bin //启用binlog日志
+	server-id=171 //主数据库服务器唯一标识符 主的必须必从大
+	重启mysql
+	2、创建复制账户
+	mysql> create user 'repl'@'192.168.61.172' identified by '123';
+	mysql> grant replication slave on *.* to 'repl'@'192.168.61.172';
+
+	查看主库的状态
+	mysql> show master status;
+	# ls /home/mysql/data/
+
+从库：
+	1、编辑my.cnf
+	//添加以下内容：
+	server-id=172 //设置从库的唯一标识符 从的必须比主小
+	relay-log=mysql-relay-bin //启用中继日志relay log
+	重启mysql
+	2、配置并启动主从复制
+	mysql> show slave status\G;
+	mysql> stop slave;
+	mysql> change master to
+	       -> master_host='192.168.61.171',	     
+  	       -> master_user='repl',
+	       -> master_password='123',
+	       -> master_log_file='mysql-bin.000001',
+	       -> master_log_pos=154;
+	mysql> start slave;
+	mysql> show slave status\G;
+
+
+查看bin_log日志
+mysqlbinlog /home/mysql/data/mysql-bin.000001
+
+查看relay-log
+mysqlbinlog /opt/data/mysql/mysql-relay-bin.000002
+
+关闭主从复制
+
+删除用户
+SELECT DISTINCT CONCAT('User: ''',user,'''@''',host,''';') AS query FROM mysql.user;

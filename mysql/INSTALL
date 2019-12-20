@@ -1,0 +1,25 @@
+卸载mysql，卸载mariadb
+rpm -qa | grep -i mysql  
+yum list installed | grep -i mysql
+yum list installed | grep -i mariadb
+
+rm -rf /usr/lib64/mysql
+rm -rf /usr/share/mysql
+rm -rf /usr/bin/mysql
+rm -rf /etc/logrotate.d/mysql
+rm -rf /var/lib/mysql
+rm -rf /var/lib/mysql/mysql
+
+===CMAKE源码安装===
+Cmake源码安装教程：https://www.cnblogs.com/yangchunlong/p/8477743.html
+安装包下载：https://downloads.mysql.com/archives/community/
+出错看这里：https://blog.csdn.net/vector_yuge/article/details/74838634
+
+===yum-bundle安装===
+https://downloads.mysql.com/archives/get/file/mysql-5.7.16-1.el7.x86_64.rpm-bundle.tar
+yum-bundle安装教程：https://blog.csdn.net/michaelwoshi/article/details/96735227
+
+===docker安装===
+
+
+===kubernetes部署mysql===

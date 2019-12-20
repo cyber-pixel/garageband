@@ -1,0 +1,66 @@
+centos7.3环境编译安装pktgen-dpdk，dpdk工具:http://tinyurl.com/vppfvh6
+
+DPDK（Date Plane Development Kit）主要基于Linux系统运行，用于快速数据包处理的函数库与驱动集合，可以极大提高数据处理性能和吞吐量，提高数据平面应用程序的工作效率。
+
+pktgen-dpdk：一种网络流量收集器，pktgen有单独的版本。这里pktgen-dpdk是集成了DPDK。
+
+
+# 一、编译DPDK
+安装环境依赖
+yum makecache;
+yum install -y gcc gcc-c++  kernel-devel kernel-headers kernel.x86_64 net-tools
+yum install -y numactl-devel.x86_64 numactl-libs.x86_64
+yum install -y pciutils
+yum install kernel-devel-$(uname -r)
+
+设置大页内存
+DPDK的使用必须要使用到大页内存，所以这里可以事先设置好。
+
+编译安装DPDK
+下载DPDK
+git clone git://dpdk.org/dpdk
+
+设置环境变量
+export RTE_SDK=/root/dpdk-18.08
+export RTE_TARGET=x86_64-native-linuxapp-gcc
+
+编译安装
+make config T=x86_64-native-linuxapp-gcc #如果系统已经有，则会提示不需要配置。
+sed -ri 's,(PMD_PCAP=).*,\1y,' build/.config # 该步骤是为了将pcap启用，启用pcap需要使用libpcap header
+make install T=x86_64-native-linuxapp-gcc 
+
+加载使用dpdk
+cd x86_64-native-linuxapp-gcc/
+modprobe uio
+insmod x86_64-native-linuxapp-gcc/kmod/igb_uio.ko
+insmod x86_64-native-linuxapp-gcc/kmod/rte_kni.ko
+查询网卡驱动以及状态
+./usertools/dpdk-devbind.py --status 查询网卡状态
+
+编译Pktgen-dpdk
+安装依赖包
+yum install -y numactl-devel gcc  readline-devel lua-devel libpcap-devel gcc-g++ net-tools numactl-devel readline epel-release
+
+note：这里需要注意，在3.5以上的pktgen-dpdk编译时，lua的版本必须要在5.3以上。而centos7yum源中自带的lua包只支持到5.1。我们需要通过其他手段来更新lua包。
+1.使用rpm包下载lua5.3：
+wget https://centos7.iuscommunity.org/ius-release.rpm
+rpm -Uvh ius-release*rpm  
+yum --enablerepo=ius-archive install lua53u*
+2.使用源码包编译安装：lua官网下载地址：https://www.lua.org/ftp/
+tar -xvf #解压lua
+cd lua-5.4.3
+make linux #编译链接库
+make install #安装到系统中同时修改系统环境变量
+make local #使当前用户
+3.检查lua的版本和lua库是否更新：
+lua –v #成功是5.3.x，x代表你下载的具体版本
+ls /usr/lib64/lua/ #成功会有5.1、5.3两个文件夹
+whereis lua #检查是否有/usr/local/bin/lua
+
+编译安装Pktgen-dpdk
+git clone git://dpdk.org/apps/pktgen-dpdk
+cd /root/pktgen-dpdk
+make -j 4 #这里我是四核的虚机，为了加速编译，这里使用了-j参数，让4个内核直接参与编译。
+
+Debug
+
