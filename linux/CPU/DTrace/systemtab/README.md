@@ -30,3 +30,13 @@ Off-CPU Analysis:http://www.brendangregg.com/offcpuanalysis.html
 Linux 下的一个全新的性能测量和调式诊断工具 Systemtap:http://tinyurl.com/tc3a8db
 Java火焰图:http://tinyurl.com/sftzyha
 
+
+
+
+SystemTap 也是一种可以通过脚本进行自由扩展的动态追踪技术。在 eBPF 出现之前，
+SystemTap 是 Linux 系统中，功能最接近 DTrace 的动态追踪机制。不过要注意，SystemTap
+在很长时间以来都游离于内核之外（而 eBPF 自诞生以来，一直根植在内核中）。
+
+所以，从稳定性上来说，SystemTap 只在 RHEL 系统中好用，在其他系统中则容易出现各种异
+常问题。当然，反过来说，支持 3.x 等旧版本的内核，也是 SystemTap 相对于 eBPF 的一个巨
+大优势。
