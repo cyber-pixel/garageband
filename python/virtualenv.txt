@@ -73,7 +73,7 @@ virtualenv + Virtaulenvwrapper：
 	http://tinyurl.com/u4n4agv
 	【不要用Pipenv：http://tinyurl.com/ulkg3hb】
 	【不用的原因是，它会更新一些已经确定版本的包，
-	比如一些不关心的依赖为什么要保持最新呢？】
+	功能还不完善，有兴趣可以参与到开发中】
 
 	不确定构建：requirements.txt没有指定库的版本，或者库的依赖库发生了变更
 	确定构建：库和重要的依赖库做精确版本控制，其它众多的依赖库不做控制
