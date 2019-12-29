@@ -130,6 +130,8 @@ deactivate
 	source ~/py_multi/virtualenv_3.8.1.sh
 	source ~/py_multi/virtualenv_3.6.2.sh
 然后依次创建项目目录、virtualenv，然后workon
+
+**用户实际操作的部分只有创建virtualenv_3.7.2.sh**
 --------------------------------------------
 
 ========IDE挂载远程环境===========
