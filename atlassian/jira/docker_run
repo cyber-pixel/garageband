@@ -1,0 +1,5 @@
+docker run --detach --publish 8080:8080 jira/jira:latest
+docker run --name jirasql -v /Users/john/dockerdata/jirasql:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -d mysql:5.6
+------------------------------
+
+一般用docker start启动即可

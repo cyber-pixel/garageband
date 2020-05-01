@@ -1,0 +1,10 @@
+
+    --restart always \
+
+docker run --name jira \
+    --link mysql-atlassian:mysql \
+    --link confluence:confluence \
+    -p 9005:8080 \
+    -v data_jira_var:/var/atlassian/jira \
+    -v data_jira_opt:/opt/atlassian/jira \
+    -d jira/jira:v7.12.0

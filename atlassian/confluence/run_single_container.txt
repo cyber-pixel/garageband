@@ -1,0 +1,13 @@
+docker build -f Dockerfile -t confluence/confluence:6.13.0 .
+
+
+# 启动容器confluence，并关联mysql和jira容器
+    --restart always \
+docker run --name confluence \
+    --link mysql-atlassian:mysql \
+    --link jira:jira \
+    -p 9006:8090 \
+    -v data_confluence_vol:/home/confluence_data \
+    -v data_confluence_opt:/opt/atlassian/confluence \
+    -v data_confluence_var:/var/atlassian/confluence \
+    -d confluence/confluence:6.13.0

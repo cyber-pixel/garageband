@@ -1,0 +1,82 @@
+version: "3.7"
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    networks:
+      atlassian-net:
+        aliases:
+          - mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+    volumes:
+      - type: volume
+        source: data_mysql_vol
+        target: /var/lib/mysql
+      - type: volume
+        source: conf_mysql_vol
+        target: /etc/mysql/mysql.conf.d
+      - type: volume
+        source: data_backup_vol
+        target: /backup
+      - type: bind
+        source: /usr/share/zoneinfo/Asia/Shanghai
+        target: /etc/localtime
+        read_only: true
+
+  jira:
+    image: jira/jira:v8.1.0
+    build: ./jira
+    container_name: jira
+    ports:
+      - "9005:8080"
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    networks:
+      atlassian-net:
+        aliases:
+          - jira
+    environment:
+      - CATALINA_OPTS= -Xms1024m -Xmx2g -Datlassian.plugins.enable.wait=300
+    volumes:
+      - data_jira_var:/var/atlassian/jira
+      - data_jira_opt:/opt/atlassian/jira
+
+  confluence:
+    image: confluence/confluence:7.0.1
+    build: ./confluence
+    container_name: confluence
+    ports:
+      - "9006:8090"
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    networks:
+      atlassian-net:
+        aliases:
+          - confluence
+    environment:
+      - CATALINA_OPTS= -Xms1024m -Xmx2g
+    volumes:
+      - data_confluence_vol:/home/confluence_data
+      - data_confluence_opt:/opt/atlassian/confluence
+      - data_confluence_var:/var/atlassian/confluence
+
+networks:
+  atlassian-net:
+    driver: bridge
+
+volumes:
+  data_mysql_vol:
+  conf_mysql_vol:
+  data_backup_vol:
+  data_jira_var:
+  data_jira_opt:
+  data_confluence_vol:
+  data_confluence_opt:
+  data_confluence_var:
